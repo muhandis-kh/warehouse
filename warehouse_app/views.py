@@ -48,14 +48,19 @@ class CalculateMaterialsView(APIView):
         result = self.calculate_materials(products_data, warehouse_data)
 
         return Response({"result": result})
-    # Mahsulotlarga ketadigan xomashyoni hisoblash uchun funksiya
+    
+    # Mahsulotlar ishlab chiqarish uchun ketadigan xomashyoni hisoblash uchun funksiya
     def calculate_materials(self, products_data, warehouse_data):
         result = []
+        
+        #ishlatib bo'lingan xomashyoni dict dan o'chirib yuborish uchun vaqtinchalik xotiraga nusxa olindi
         remaining_materials = warehouse_data.copy()
         
         for product in products_data:
             product_name = product["product_name"]
             product_qty = product["product_qty"]
+            
+            # Mahsulot uchun kerakli xomashyolar mahsulot nomiga ko'ra saralandi
             product_materials = ProductMaterial.objects.filter(product__product_name=product_name).values('quantity', 'material__material_name',)
 
             
@@ -64,7 +69,7 @@ class CalculateMaterialsView(APIView):
                 material_name = material["material__material_name"]
                 required_qty = material["quantity"] * product_qty
                 
-                # Depoda bulunan malzemeleri kontrol et
+                # Ombordagi xomashlarni tekshiriladi
                 remaining_qty = required_qty
                 for warehouse_material in remaining_materials[:]:
                     if warehouse_material["material_name"] == material_name:
@@ -76,7 +81,7 @@ class CalculateMaterialsView(APIView):
                             used_qty = available_qty
                             remaining_qty -= available_qty
                         
-                        # Kullanılan malzemeyi güncelle ve ikinci ürüne dahil etme
+                        # Ishlatilgan xomashyo ombordagi xomashyolar sonidan ayirib yuboriladi
                         warehouse_material["remainder"] -= used_qty
                         if warehouse_material["remainder"] == 0:
                             remaining_materials.remove(warehouse_material)
@@ -91,7 +96,7 @@ class CalculateMaterialsView(APIView):
                         if remaining_qty == 0:
                             break
                 
-                # Eksik malzemeleri kontrol et
+                # Yetishmayotgan xomashyolar tekshiriladi, agar omborda yo'q bo'lsa id va narx null qaytariladi
                 if remaining_qty > 0:
                     used_materials.append({
                         "warehouse_id": None,
