@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
+    #global apps
+    'rest_framework',    
     #local apps
     'warehouse_app',
 ]
@@ -86,9 +88,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': DATABASE_NAME,
         'USER': DATABASE_USER,
-        'PASSWORD': DATABASE_USER,
-        'HOST': 'localhost',   # Veritabanının çalıştığı adres (genellikle localhost)
-        'PORT': '5432',        # PostgreSQL'in varsayılan portu
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': 'localhost', 
+        'PORT': '5432',
     }
 }
 
@@ -129,7 +131,35 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+STATIC_ROOT = os.path.join(
+    BASE_DIR, 'staticfiles', 'static')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+""" Rest framework settings """
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny'
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 2,  # obyektlar soni
+
+
+    """ Trotting settings """
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',  # anounim userlar uchun
+        'rest_framework.throttling.UserRateThrottle'  # ro'yhatdan o'tgan userlar uchun
+    ],
+    'DEFAULT_THROTTLE_RATES': {  # second, minute, hour, day
+        'anon': '5/minute',  # anonim
+        'user': '5/minute',  # ro'yhatdan o'tgan user
+        'branch_trottle': '7/minute'
+    }
+}
